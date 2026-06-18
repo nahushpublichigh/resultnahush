@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAHUSH PUBLIC HIGH SCHOOL MOHLA</title>
+    <!-- HTML-to-PDF लाइब्रेरी -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght=300;400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #f3f4f6; }
+        
+        /* वॉटरमार्क स्टाइल */
+        .watermark-container {
+            position: relative;
+        }
+        .watermark-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            width: 60%;
+            opacity: 0.06;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .content-secure {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* तालिका के लिए गहरा नीला बोल्ड बॉर्डर */
+        .blue-bold-table {
+            border: 3px solid #1e3a8a !important;
+        }
+        .blue-bold-table th {
+            border: 2px solid #1e3a8a !important;
+            background-color: #1e3a8a !important;
+            color: white !important;
+        }
+        .blue-bold-table td {
+            border: 2px solid #1e3a8a !important;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-card { box-shadow: none; border: 3px solid #1e3a8a; padding: 25px; background: white !important; }
+            .watermark-bg { opacity: 0.08 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- मुख्य शीर्ष पट्टी -->
+    <nav class="bg-blue-900 text-white shadow-md no-print p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 id="nav-school-name" class="text-xl font-bold tracking-wide">NAHUSH PUBLIC HIGH SCHOOL, MOHLA</h1>
+            <span class="text-xs text-blue-200 font-medium select-none bg-blue-950 px-2 py-1 rounded">Ctrl+Alt दबाएं</span>
+        </div>
+    </nav>
+
+    <!-- एडमिन पैनल (Ctrl+Alt दबाने पर खुलेगा) -->
+    <div id="admin-panel" class="max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg shadow-md hidden no-print border-l-4 border-blue-800">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">🛡️ स्कूल एडमिन सेटिंग्स पैनल (गुप्त मोड)</h2>
+        
+        <!-- पासवर्ड बॉक्स -->
+        <div id="auth-box" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">एडमिन पासवर्ड दर्ज करें:</label>
+            <div class="flex gap-2">
+                <input type="password" id="admin-pin" placeholder="••••••••" class="border rounded p-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-600 font-bold">
+                <button onclick="verifyAdmin()" class="bg-blue-800 hover:bg-blue-900 text-white px-5 py-2 rounded font-medium transition shadow">लॉगिन करें</button>
+            </div>
+            <p id="auth-error" class="text-red-500 text-xs mt-2 font-semibold hidden">❌ गलत पासवर्ड! कृपया सही पासवर्ड डालें।</p>
+        </div>
+
+        <!-- सेटिंग्स फॉर्म -->
+        <div id="upload-section" class="hidden border-t pt-4">
+            <p class="text-sm text-green-700 font-bold mb-4">✅ लॉगिन सफल! अपनी सेटिंग्स बदलें:</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">स्कूल का नाम (School Name):</label>
+                    <input type="text" id="cfg-school" class="border rounded p-2 w-full text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">सत्र / वर्ष (Year):</label>
+                    <input type="text" id="cfg-year" class="border rounded p-2 w-full text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">परीक्षा का नाम (Exam Name):</label>
+                    <input type="text" id="cfg-exam" class="border rounded p-2 w-full text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">विषय का पूर्णांक (Max Marks):</label>
+                    <input type="number" id="cfg-max" class="border rounded p-2 w-full text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">📸 स्कूल लोगो फोटो चुनें (Upload Logo Image):</label>
+                    <input type="file" id="cfg-logo-file" accept="image/*" class="border rounded p-1 w-full text-sm bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">🖼️ बैकग्राउंड वॉटरमार्क फोटो चुनें (Upload Watermark):</label>
+                    <input type="file" id="cfg-watermark-file" accept="image/*" class="border rounded p-1 w-full text-sm bg-gray-50">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">नीचे का मुख्य नोट (Note):</label>
+                    <input type="text" id="cfg-note" class="border rounded p-2 w-full text-sm">
+                </div>
+            </div>
+            <button onclick="saveAdminConfig()" class="mt-4 bg-blue-800 hover:bg-blue-900 text-white px-6 py-2 rounded font-bold text-sm shadow">💾 सेटिंग्स सुरक्षित करें</button>
+        </div>
+    </div>
+
+    <!-- खोज बॉक्स -->
+    <div class="max-w-4xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md no-print text-center">
+        <h3 id="search-title" class="text-xl font-bold text-gray-800 mb-2">🔍 छात्र परीक्षा परिणाम पोर्टल</h3>
+        <p class="text-sm text-gray-500 mb-6">कृपया अपना सही अनुक्रमांक (Roll Number) भरकर परिणाम देखें</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center items-center max-w-md mx-auto">
+            <input type="text" id="search-roll" placeholder="रोल नंबर डालें (जैसे: 101, 102)" class="border border-gray-300 rounded-lg p-3 w-full font-extrabold text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-800 uppercase tracking-wider">
+            <button onclick="fetchResult()" class="bg-blue-800 hover:bg-blue-900 text-white px-8 py-3 rounded-lg font-bold w-full sm:w-auto transition shadow-md whitespace-nowrap">नतीजा देखें</button>
+        </div>
+        <div id="loading" class="text-blue-800 font-medium mt-4 hidden animate-pulse">⏳ गूगल शीट से परिणाम खोजा जा रहा है, कृपया प्रतीक्षा करें...</div>
+        <div id="error-msg" class="text-red-500 font-semibold mt-4 hidden"></div>
+    </div>
+
+    <!-- परिणाम पत्रक (Result Card) -->
+    <div id="result-card-container" class="max-w-4xl mx-auto mt-8 p-6 bg-white rounded-xl shadow-xl hidden print-card mb-12 watermark-container">
+        
+        <!-- डायनामिक वॉटरमार्क इमेज -->
+        <img id="res-watermark" src="" alt="" class="watermark-bg hidden">
+
+        <div class="content-secure" id="download-area">
+            <div class="border-b-4 border-blue-900 pb-4 mb-6">
+                <!-- हेडिंग और लोगो को अगल-बगल लाने का लेआउट -->
+                <div class="flex items-center justify-center gap-4 flex-wrap sm:flex-nowrap text-center sm:text-left">
+                    <div id="logo-div" class="hidden shrink-0">
+                        <img id="res-logo" src="" alt="Logo" class="h-24 w-24 object-contain">
+                    </div>
+                    <div class="flex-1 text-center">
+                        <h2 id="res-school-name" class="text-2xl md:text-3xl font-black text-blue-950 tracking-wide">NAHUSH PUBLIC HIGH SCHOOL, MOHLA</h2>
+                        <p class="text-xs md:text-sm text-gray-600 font-bold tracking-widest mt-1 uppercase">Block Majholi, Dist. Jabalpur (M.P.)</p>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="text-md font-semibold text-blue-900 bg-blue-50 inline-block px-4 py-1 rounded-full">
+                        <span id="res-exam-title">परीक्षा परिणाम पत्रक</span> - सत्र <span id="res-year">2025-26</span>
+                    </p>
+                </div>
+                
+                <!-- सभी छात्र विवरण गूगल शीट के हिसाब से -->
+                <div id="student-info-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-6 text-left bg-gray-50 p-4 rounded-xl border border-blue-200 text-sm">
+                </div>
+            </div>
+
+            <!-- अंकों की तालिका (Statement of Marks) -->
+            <div class="exam-tab active">
+                <h4 class="text-base font-bold text-blue-900 mb-3 flex items-center gap-2">📊 STATEMENT OF MARKS (अंकों का विवरण)</h4>
+                <div class="overflow-x-auto rounded-lg">
+                    <table class="w-full text-left border-collapse text-sm blue-bold-table">
+                        <thead>
+                            <tr class="bg-blue-900 text-white font-bold">
+                                <th class="p-3">विषय / विवरण (Subject / Columns)</th>
+                                <th class="p-3 text-center w-36">अधिकतम अंक (Max)</th>
+                                <th class="p-3 text-center w-48">प्राप्तांक (Marks)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hy-table-body" class="divide-y divide-blue-900 bg-white/90">
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- कुल योग, प्रतिशत और रैंक कैलकुलेशन बॉक्स -->
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-blue-50 p-4 rounded-lg border-2 border-blue-900 text-center sm:text-left">
+                    <div class="flex flex-col justify-center">
+                        <span class="text-blue-900 text-xs font-bold uppercase tracking-wider">कुल पूर्णांक / प्राप्तांक</span>
+                        <strong class="text-lg font-black text-blue-950 mt-1">
+                            <span id="hy-max-total">0</span> / <span id="hy-total">0</span>
+                        </strong>
+                    </div>
+                    <div class="flex flex-col justify-center border-y sm:border-y-0 sm:border-x border-blue-300 py-2 sm:py-0 sm:px-4">
+                        <span class="text-blue-900 text-xs font-bold uppercase tracking-wider">कुल प्रतिशत (Percentage)</span>
+                        <strong id="hy-percentage" class="text-xl font-black text-blue-900 mt-1">0%</strong>
+                    </div>
+                    <div id="rank-box" class="flex flex-col justify-center hidden">
+                        <span class="text-amber-800 text-xs font-bold uppercase tracking-wider">कक्षा में स्थान (Rank)</span>
+                        <strong id="hy-rank" class="text-xl font-black text-amber-700 mt-1">-</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- नीचे का मुख्य नोट और एक्शन बटन्स -->
+            <div class="mt-8 pt-4 border-t-2 border-blue-900 flex flex-col sm:flex-row justify-between items-center gap-4 no-print">
+                <p id="res-note" class="text-xs text-gray-600 font-medium"></p>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="downloadPDF()" class="bg-green-700 hover:bg-green-800 text-white px-5 py-2 rounded-lg text-sm font-bold shadow transition flex items-center gap-1 justify-center flex-1 sm:flex-none whitespace-nowrap">
+                        📥 रिजल्ट PDF डाउनलोड करें
+                    </button>
+                    <button onclick="window.print()" class="bg-blue-900 hover:bg-blue-950 text-white px-5 py-2 rounded-lg text-sm font-bold shadow transition flex items-center gap-1 justify-center flex-1 sm:flex-none whitespace-nowrap">
+                        🖨️ प्रिंट करें
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scriptUrl = "https://script.google.com/macros/s/AKfycbwBv89BptlZkB1lZ1oW_ev9ZgpWpDWjSvNrt0EkNS2zWNbeLGbm4CKo1ShSY7jS_RN4/exec";
+        const MASTER_PASSWORD = "Ram@4797"; 
+
+        let siteConfig = JSON.parse(localStorage.getItem('schoolPortalConfig')) || {
+            schoolName: "NAHUSH PUBLIC HIGH SCHOOL, MOHLA",
+            year: "2025-26",
+            examName: "परीक्षा परिणाम पत्रक",
+            maxMarks: "100",
+            logoData: "",
+            watermarkData: "",
+            note: "💡 इस परिणाम पत्रक को आप सीधे प्रिंट या PDF में सुरक्षित कर सकते हैं।"
+        };
+
+        function applyConfig() {
+            document.getElementById('nav-school-name').innerText = siteConfig.schoolName;
+            document.getElementById('search-title').innerText = `🔍 छात्र परीक्षा परिणाम पोर्टल (सत्र ${siteConfig.year})`;
+            document.getElementById('res-school-name').innerText = siteConfig.schoolName;
+            document.getElementById('res-exam-title').innerText = siteConfig.examName;
+            document.getElementById('res-year').innerText = siteConfig.year;
+            document.getElementById('res-note').innerText = siteConfig.note;
+            
+            if(siteConfig.logoData && siteConfig.logoData.trim() !== "") {
+                document.getElementById('res-logo').src = siteConfig.logoData;
+                document.getElementById('logo-div').style.display = 'block';
+            } else {
+                document.getElementById('logo-div').style.display = 'none';
+            }
+
+            if(siteConfig.watermarkData && siteConfig.watermarkData.trim() !== "") {
+                document.getElementById('res-watermark').src = siteConfig.watermarkData;
+                document.getElementById('res-watermark').classList.remove('hidden');
+            } else {
+                document.getElementById('res-watermark').classList.add('hidden');
+            }
+        }
+        applyConfig();
+
+        window.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.altKey) {
+                e.preventDefault();
+                const panel = document.getElementById('admin-panel');
+                panel.classList.toggle('hidden');
+                if(!panel.classList.contains('hidden')) {
+                    document.getElementById('admin-pin').focus();
+                }
+            }
+        });
+
+        function verifyAdmin() {
+            const entered = document.getElementById('admin-pin').value;
+            if(entered === MASTER_PASSWORD) {
+                document.getElementById('auth-box').classList.add('hidden');
+                document.getElementById('upload-section').classList.remove('hidden');
+                
+                document.getElementById('cfg-school').value = siteConfig.schoolName;
+                document.getElementById('cfg-year').value = siteConfig.year;
+                document.getElementById('cfg-exam').value = siteConfig.examName;
+                document.getElementById('cfg-max').value = siteConfig.maxMarks;
+                document.getElementById('cfg-note').value = siteConfig.note;
+            } else {
+                const err = document.getElementById('auth-error');
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 3000);
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function saveAdminConfig() {
+            siteConfig.schoolName = document.getElementById('cfg-school').value.trim();
+            siteConfig.year = document.getElementById('cfg-year').value.trim();
+            siteConfig.examName = document.getElementById('cfg-exam').value.trim();
+            siteConfig.maxMarks = document.getElementById('cfg-max').value.trim();
+            siteConfig.note = document.getElementById('cfg-note').value.trim();
+
+            const logoFile = document.getElementById('cfg-logo-file').files[0];
+            if (logoFile) {
+                siteConfig.logoData = await fileToBase64(logoFile);
+            }
+
+            const watermarkFile = document.getElementById('cfg-watermark-file').files[0];
+            if (watermarkFile) {
+                siteConfig.watermarkData = await fileToBase64(watermarkFile);
+            }
+
+            localStorage.setItem('schoolPortalConfig', JSON.stringify(siteConfig));
+            applyConfig();
+            alert("🎯 बधाई हो! फोटो, वॉटरमार्क और सभी एडमिन सेटिंग्स सफलतापूर्वक सुरक्षित हो गई हैं।");
+            document.getElementById('admin-panel').classList.add('hidden');
+        }
+
+        // PDF डाउनलोड करने का नया फंक्शन
+        function downloadPDF() {
+            const element = document.getElementById('result-card-container');
+            const rollNo = document.getElementById('res-roll') ? document.getElementById('res-roll').innerText : 'Result';
+            
+            const opt = {
+                margin:       10,
+                filename:     `Result_Roll_${rollNo}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // पीडीएफ जनरेट करना
+            html2pdf().set(opt).from(element).save();
+        }
+
+        async function fetchResult() {
+            const rollNo = document.getElementById('search-roll').value.trim();
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error-msg');
+            const resultCard = document.getElementById('result-card-container');
+            
+            errorDiv.classList.add('hidden');
+            resultCard.classList.add('hidden');
+            document.getElementById('rank-box').classList.add('hidden');
+            
+            if (!rollNo) {
+                errorDiv.innerText = "⚠️ कृपया पहले अनुक्रमांक नंबर दर्ज करें!";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            loadingDiv.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`${scriptUrl}?rollNo=${encodeURIComponent(rollNo)}`);
+                const result = await response.json();
+
+                loadingDiv.classList.add('hidden');
+
+                if (result.status === "error") {
+                    errorDiv.innerText = "❌ " + result.message;
+                    errorDiv.classList.remove('hidden');
+                } else if (result.status === "success") {
+                    const student = result.data;
+                    
+                    let infoGridHtml = "";
+                    let tableHtml = "";
+                    let totalObtained = 0;
+                    let totalMaxPossible = 0;
+                    
+                    const metaKeys = [
+                        'ROLL NO', 'ROLL NO.', 'NAME OF STUDENT', 'STUDENT NAME', 'NAME',
+                        'NAME OF FATHER', "FATHER'S NAME", 'FATHER NAME',
+                        'NAME OF MOTHER', "MOTHER'S NAME", 'MOTHER NAME',
+                        'CLASS', 'YEAR', 'RANK', 'CLASS RANK'
+                    ];
+
+                    for (const [key, value] of Object.entries(student)) {
+                        const cleanKey = key.toUpperCase().trim();
+                        
+                        if (metaKeys.includes(cleanKey)) {
+                            if (cleanKey === 'RANK' || cleanKey === 'CLASS RANK') {
+                                if(value && value.toString().trim() !== "") {
+                                    document.getElementById('hy-rank').innerText = value;
+                                    document.getElementById('rank-box').classList.remove('hidden');
+                                }
+                            }
+                            
+                            let displayLabel = key;
+                            if (cleanKey.includes('STUDENT') || cleanKey === 'NAME') displayLabel = "छात्र का नाम";
+                            else if (cleanKey.includes('FATHER')) displayLabel = "पिता का नाम";
+                            else if (cleanKey.includes('MOTHER')) displayLabel = "माता का नाम";
+                            else if (cleanKey.includes('ROLL')) displayLabel = "अनुक्रमांक (Roll No)";
+                            else if (cleanKey === 'CLASS') displayLabel = "कक्षा (Class)";
+
+                            // अनुक्रमांक आईडी सेट करना ताकि पीडीएफ नाम में यूज़ हो सके
+                            const idAttr = cleanKey.includes('ROLL') ? 'id="res-roll"' : '';
+
+                            infoGridHtml += `
+                                <div class="p-1">
+                                    <span class="text-blue-900 font-bold block text-xs uppercase">${displayLabel}:</span> 
+                                    <strong ${idAttr} class="text-gray-950 block text-base font-bold">${value || '-'}</strong>
+                                </div>
+                            `;
+                        }
+                    }
+                    document.getElementById('student-info-grid').innerHTML = infoGridHtml;
+
+                    const defaultMax = parseInt(siteConfig.maxMarks) || 100;
+
+                    for (const [key, value] of Object.entries(student)) {
+                        const cleanKey = key.toUpperCase().trim();
+                        
+                        if (!metaKeys.includes(cleanKey) && key.trim() !== "") {
+                            totalMaxPossible += defaultMax;
+
+                            if(!isNaN(parseInt(value))) {
+                                totalObtained += parseInt(value);
+                            }
+                            
+                            tableHtml += `
+                                <tr class="hover:bg-blue-50/50 transition">
+                                    <td class="p-3 font-bold text-gray-800">${key}</td>
+                                    <td class="p-3 text-center text-gray-600 font-semibold text-base">${defaultMax}</td>
+                                    <td class="p-3 text-center font-black text-blue-900 text-lg">${value}</td>
+                                </tr>
+                            `;
+                        }
+                    }
+
+                    document.getElementById('hy-table-body').innerHTML = tableHtml;
+                    document.getElementById('hy-max-total').innerText = totalMaxPossible;
+                    document.getElementById('hy-total').innerText = totalObtained;
+                    
+                    if (totalMaxPossible > 0) {
+                        let percentage = (totalObtained / totalMaxPossible) * 100;
+                        document.getElementById('hy-percentage').innerText = percentage.toFixed(2) + "%";
+                    } else {
+                        document.getElementById('hy-percentage').innerText = "0%";
+                    }
+                    
+                    resultCard.classList.remove('hidden');
+                    resultCard.scrollIntoView({ behavior: 'smooth' });
+                }
+            } catch (err) {
+                loadingDiv.classList.add('hidden');
+                errorDiv.innerText = "❌ सर्वर से संपर्क करने में असमर्थ। कृपया अपनी ऐप्स स्क्रिप्ट लिंक जांचें।";
+                errorDiv.classList.remove('hidden');
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
